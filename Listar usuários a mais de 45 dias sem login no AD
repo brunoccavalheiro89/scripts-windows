@@ -1,0 +1,32 @@
+# Define o número de dias que um usuário pode ficar sem acessar antes de ser desativado e movido
+$InactiveDays = 45
+
+# Define o DN da OU para onde os usuários serão movidos
+$InactiveOU = "OU=DESATIVADOS,DC=doamin,DC=com,DC=br"
+
+# Define o DN da OU onde os usuários serão buscados
+$SourceOU = "OU=example,DC=domain,DC=com,DC=br"
+
+# Obtém a data atual
+$CurrentDate = Get-Date
+
+# Obtém todas as contas de usuário ativas do Active Directory na OU especificada
+$Users = Get-ADUser -Filter {Enabled -eq $True} -SearchBase $SourceOU -Properties LastLogonDate
+
+# Itera sobre as contas de usuário
+foreach ($User in $Users) {
+    # Verifica se a data da última logon não é nula
+    if ($User.LastLogonDate -ne $null) {
+        # Verifica se a data da última logon é menor que a data atual menos o número de dias de inatividade
+        if ($User.LastLogonDate -lt ($CurrentDate).AddDays(-$InactiveDays)) {
+            # Desativa a conta do usuário
+            Disable-ADAccount -Identity $User
+            # Move a conta do usuário para a OU especificada
+            Move-ADObject -Identity $User -TargetPath $InactiveOU
+            Write-Host "A conta do usuário $($User.Name) foi desativada e movida para $InactiveOU por inatividade." -ForegroundColor Yellow
+        }
+    }
+}
+
+# Exporta os resultados para um arquivo CSV
+$Users | Export-CSV -Path "C:\InactiveUsers.csv" -NoTypeInformation
