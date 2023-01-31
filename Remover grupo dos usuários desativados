@@ -1,0 +1,11 @@
+$OU = "OU=DESATIVADOS,DC=domain,DC=com,DC=br"
+
+Get-ADUser -Filter {Enabled -eq $False} -SearchBase $OU | ForEach-Object {
+    $User = $_
+    Get-ADPrincipalGroupMembership $User | Where-Object {
+        $Group = $_
+        (Get-ADGroup $Group).GroupCategory -eq "Security"
+    } | ForEach-Object {
+        Remove-ADPrincipalGroupMembership -Identity $User -MemberOf $_
+    }
+}
