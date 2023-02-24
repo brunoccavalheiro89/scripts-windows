@@ -1,0 +1,1 @@
+Get-ADUser -Filter * -SearchBase "OU=NomeDaOU,DC=NomeDoDominio,DC=Com" | Select-Object Name, SamAccountName, Enabled, LastLogonDate | Export-CSV -Path "C:\Caminho\Para\Arquivo.csv" -NoTypeInformation
